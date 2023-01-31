@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body class="w3-container">
+    <div class="w3-container w3-bar w3-card-4 w3-green w3-margin-bottom">
+        <h3 class="w3-bar-item">Zenoh ROS2</h3>
+    </div>
+
+    <label for="bridge_url">Zenoh REST URL:</label>
+    <input id="bridge_url" class="w3-input w3-border w3-padding-small" type="text" required
+        value="http://localhost:8000/"><br />
+
+
+    <div class="w3-card-4 w3-margin-bottom">
+        <header class="w3-bar w3-green" onclick="document.getElementById('Drive').classList.toggle('w3-hide');">
+            <h5 class="w3-bar-item" style="margin: 0;">Drive</h5>
+            <h5 class="w3-bar-item w3-right" style="margin: 0;"><i class='fa fa-gamepad'></i></h5>
+        </header>
+        <div id="Drive" class="w3-container w3-padding">
+            <div class="w3-auto" style="display: grid; width:12em; height:9em; ">
+                <button onmousedown="pubTwist(1.0, 0.0);" onmouseup="pubTwist(0.0, 0.0);"
+                    ontouchstart="pubTwist(1.0, 0.0);" ontouchend="pubTwist(0.0, 0.0);"
+                    style='font-size:2em; grid-column: 2; grid-row: 1;'>
+                    <i class='fas fa-caret-up'></i>
+                </button>
+                <button onmousedown="pubTwist(0.0, 1.0);" onmouseup="pubTwist(0.0, 0.0);"
+                    ontouchstart="pubTwist(0.0, 1.0);" ontouchend="pubTwist(0.0, 0.0);"
+                    style='font-size:2em; grid-column: 1; grid-row: 2;'>
+                    <i class='fas fa-caret-left'></i>
+                </button>
+                <button onmousedown="pubTwist(-1.0, 0.0);" onmouseup="pubTwist(0.0, 0.0);"
+                    ontouchstart="pubTwist(-1.0, 0.0);" ontouchend="pubTwist(0.0, 0.0);"
+                    style='font-size:2em; grid-column: 2; grid-row: 2;'>
+                    <i class='fas fa-caret-down'></i>
+                </button>
+                <button onmousedown="pubTwist(0.0, -1.0);" onmouseup="pubTwist(0.0, 0.0);"
+                    ontouchstart="pubTwist(0.0, -1.0);" ontouchend="pubTwist(0.0, 0.0);"
+                    style='font-size:2em; grid-column: 3; grid-row: 2;'>
+                    <i class='fas fa-caret-right'></i>
+                </button>
+                <button onclick="pubTwist(0.0, 0.0);" style='font-size:2em; grid-column: 1 / 4; grid-row: 3;'>
+                    STOP
+                </button>
+            </div>
+            <br />
+        </div>
+    </div>
+
+    <div class="w3-card-4 w3-margin-bottom">
+        <header class="w3-bar w3-green" onclick="document.getElementById('Listener').classList.toggle('w3-hide');">
+            <h5 class="w3-bar-item" style="margin: 0;">Listener</h5>
+            <h5 class="w3-bar-item w3-right" style="margin: 0;"><i class='fa fa-envelope'></i></h5>
+        </header>
+        <div id="Listener" class="w3-container w3-padding">
+            <div style="overflow:auto; height:200px; border:1px solid black;" id="listener_logs"></div>
+        </div>
+    </div>
+
+    <div class="w3-card-4 w3-margin-bottom">
+        <header class="w3-bar w3-green" onclick="document.getElementById('Publisher').classList.toggle('w3-hide');">
+            <h5 class="w3-bar-item" style="margin: 0;">Publisher</h5>
+            <h5 class="w3-bar-item w3-right" style="margin: 0;"><i class='fa fa-upload'></i></h5>
+        </header>
+        <div id="Drive" class="w3-container w3-padding">
+            <div class="w3-auto">
+                <label for="publisher_res">Publish String messages to:</label>
+                <input id="publisher_res" class="w3-input w3-border w3-padding-small" type="text" required
+                    value="rt/chatter2"><br />
+                <label for="publish_data">messages:</label>
+                <input id="publish_data" class="w3-input w3-border w3-padding-small" type="text" required
+                    value="Hello from HTML."><br />
+                <input type="submit" class="w3-btn w3-green" value="publish"
+                    onclick="pubString(); return false"><br />
+            </div>
+            <br />
+        </div>
+    </div>
+
+    <div class="w3-card-4 w3-margin-bottom">
+        <header class="w3-bar w3-green" onclick="document.getElementById('Config').classList.toggle('w3-hide');">
+            <h5 class="w3-bar-item" style="margin: 0;">Config</h5>
+            <h5 class="w3-bar-item w3-right" style="margin: 0;"><i class='fa fa-gear'></i></h5>
+        </header>
+        <form id="Config" class="w3-container w3-hide">
+            <label for="scope">Extra scope prefixed to keys:</label>
+            <input id="scope" class="w3-input w3-border w3-padding-small" type="text" value=""><br />
+            <label for="cmd_vel_res">Publish Twist messages to:</label>
+            <input id="cmd_vel_res" class="w3-input w3-border w3-padding-small" type="text" required
+                value="rt/turtle1/cmd_vel"><br />
+            <label for="linear_scale">Linear scale:</label>
+            <input id="linear_scale" class="w3-input w3-border w3-padding-small" type="number" required
+                value="1.0"><br />
+            <label for="angular_scale">Angular scale:</label>
+            <input id="angular_scale" class="w3-input w3-border w3-padding-small" type="number" required
+                value="1.0"><br />
+            <label for="listener_res">Subscribe to String messages from:</label>
+            <input id="listener_res" class="w3-input w3-border w3-padding-small" type="text" required
+                value="rt/chatter"><br />
+            <input type="submit" class="w3-btn w3-green" value="Reset subscriptions"
+                onclick="resetAllSubscriptions(); return false"><br />
+            <br />
+        </form>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bytebuffer@5.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jscdr@0.0.2/dist/index.umd.js"></script>
+    <script>
+        // ROS2 Time type
+        class Time {
+            constructor(sec, nsec) {
+                this.sec = sec;
+                this.nsec = nsec;
+            }
+
+            static decode(cdrReader) {
+                let sec = cdrReader.readInt32();
+                let nsec = cdrReader.readUint32();
+                return new Time(sec, nsec);
+            }
+        }
+
+        class String {
+            constructor(data) {
+                this.data = data;
+            }
+
+            encode(cdrWriter) {
+                cdrWriter.writeUint32(this.data.length + 1);
+                cdrWriter.buf.writeUTF8String(this.data);
+                cdrWriter.writeByte(0);
+                // cdrWriter.writeString(this.data);
+            }
+
+            static decode(cdrReader) {
+                let data = cdrReader.readString();
+                return new String(data)
+            }
+        }
+
+        // ROS2 Log type (received in 'rosout' topic)
+        class Log {
+            constructor(time, level, name, msg, file, fn, line) {
+                this.time = time;
+                this.level = level;
+                this.name = name;
+                this.msg = msg;
+                this.file = file;
+                this.fn = fn;
+                this.line = line;
+            }
+
+            static decode(cdrReader) {
+                let time = Time.decode(cdrReader);
+                let level = cdrReader.readByte();
+                let name = cdrReader.readString();
+                let msg = cdrReader.readString();
+                let file = cdrReader.readString();
+                let fn = cdrReader.readString();
+                let line = cdrReader.readUint32();
+                return new Log(time, level, name, msg, file, fn, line);
+            }
+        }
+
+        // ROS2 Vector3 type
+        class Vector3 {
+            constructor(x, y, z) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+
+            encode(cdrWriter) {
+                cdrWriter.writeFloat64(this.x);
+                cdrWriter.writeFloat64(this.y);
+                cdrWriter.writeFloat64(this.z);
+            }
+
+            static decode(cdrReader) {
+                let x = cdrReader.readFloat64();
+                let y = cdrReader.readFloat64();
+                let z = cdrReader.readFloat64();
+                return new Vector3(x, y, z);
+            }
+        }
+
+        // ROS2 Quaternion type
+        class Quaternion {
+            constructor(x, y, z, w) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.w = w;
+            }
+
+            static decode(cdrReader) {
+                let x = cdrReader.readFloat64();
+                let y = cdrReader.readFloat64();
+                let z = cdrReader.readFloat64();
+                let w = cdrReader.readFloat64();
+                return new Quaternion(x, y, z, w);
+            }
+        }
+
+        // ROS2 Twist type (published in 'cmd_vel' topic)
+        class Twist {
+            constructor(linear, angular) {
+                this.linear = linear;
+                this.angular = angular;
+            }
+
+            encode(cdrWriter) {
+                this.linear.encode(cdrWriter);
+                this.angular.encode(cdrWriter);
+            }
+        }
+
+        // ROS2 Header type
+        class Header {
+            constructor(time, frame_id) {
+                this.time = time;
+                this.frame_id = frame_id;
+            }
+
+            static decode(cdrReader) {
+                let time = Time.decode(cdrReader);
+                let frame_id = cdrReader.readString();
+            }
+        }
+
+
+        // ROS2 BatteryState type (received in 'battery_state' topic)
+        // Warning: not complete, since we only need to decode up-to 'percentage'
+        class BatteryState {
+            constructor(header, voltage, temperature, current, charge, capacity, design_capacity, percentage) {
+                this.header = header;
+                this.voltage = voltage;
+                this.temperature = temperature;
+                this.current = current;
+                this.charge = charge;
+                this.capacity = capacity;
+                this.design_capacity = design_capacity;
+                this.percentage = percentage;
+            }
+
+            static decode(cdrReader) {
+                let header = Header.decode(cdrReader);
+                let voltage = cdrReader.readFloat32();
+                let temperature = cdrReader.readFloat32();
+                let current = cdrReader.readFloat32();
+                let charge = cdrReader.readFloat32();
+                let capacity = cdrReader.readFloat32();
+                let design_capacity = cdrReader.readFloat32();
+                let percentage = cdrReader.readFloat32();
+                return new BatteryState(header, voltage, temperature, current, charge, capacity, design_capacity, percentage);
+            }
+        }
+
+        // ROS2 LaserScan type (received in 'scan' topic)
+        class LaserScan {
+            constructor(header, angle_min, angle_max, angle_increment, time_increment, scan_time, range_min, range_max, ranges, intensities) {
+                this.header = header;
+                this.angle_min = angle_min;
+                this.angle_max = angle_max;
+                this.angle_increment = angle_increment;
+                this.time_increment = time_increment;
+                this.scan_time = scan_time;
+                this.range_min = range_min;
+                this.range_max = range_max;
+                this.ranges = ranges;
+                this.intensities = intensities;
+            }
+
+            static decode(cdrReader) {
+                let header = Header.decode(cdrReader);
+                let angle_min = cdrReader.readFloat32();
+                let angle_max = cdrReader.readFloat32();
+                let angle_increment = cdrReader.readFloat32();
+                let time_increment = cdrReader.readFloat32();
+                let scan_time = cdrReader.readFloat32();
+                let range_min = cdrReader.readFloat32();
+                let range_max = cdrReader.readFloat32();
+
+                let ranges_length = cdrReader.readInt32()
+                let ranges = [];
+                for (const x of Array(ranges_length).keys()) {
+                    ranges.push(cdrReader.readFloat32())
+                }
+
+                let intensities_length = cdrReader.readInt32()
+                let intensities = [];
+                for (const x of Array(intensities_length).keys()) {
+                    intensities.push(cdrReader.readFloat32())
+                }
+                return new LaserScan(header, angle_min, angle_max, angle_increment, time_increment, scan_time, range_min, range_max, ranges, intensities);
+            }
+        }
+
+        const Http = new XMLHttpRequest();
+
+        function pubString() {
+            // Get scales from HTML
+            var publish_data = document.getElementById("publish_data").value
+
+            // Create a String message
+            var string = new String(publish_data);
+            console.log(string);
+            // Since it's going to DDS, encode it using a jscdr.CDRWriter
+            var writer = new jscdr.CDRWriter();
+            string.encode(writer);
+
+            // Get bridge URL and cmd_vel resource to publish from HTML
+            var bridge_url = document.getElementById("bridge_url").value
+            var publisher_res = document.getElementById("publisher_res").value
+            var scope = document.getElementById("scope").value
+            if (scope.length > 0 && !scope.endsWith("/")) { scope += "/" }
+
+            console.log("Send to " + bridge_url + scope + publisher_res);
+            // PUT it to zenoh via its REST API
+            Http.open('PUT', bridge_url + scope + publisher_res, true);
+            Http.setRequestHeader('Content-Type', 'application/octet-stream');
+            Http.send(writer.buf.buffer);
+        }
+
+        // publish a Twist to cmd_vel topic
+        function pubTwist(linear, angular) {
+            // Get scales from HTML
+            var linear_scale = document.getElementById("linear_scale").value
+            var angular_scale = document.getElementById("angular_scale").value
+
+            // Create a Twist message
+            var twist = new Twist(
+                new Vector3(linear * linear_scale, 0.0, 0.0),
+                new Vector3(0.0, 0.0, angular * angular_scale));
+            console.log(twist);
+            // Since it's going to DDS, encode it using a jscdr.CDRWriter
+            var writer = new jscdr.CDRWriter();
+            twist.encode(writer);
+
+            // Get bridge URL and cmd_vel resource to publish from HTML
+            var bridge_url = document.getElementById("bridge_url").value
+            var cmd_vel_res = document.getElementById("cmd_vel_res").value
+            var scope = document.getElementById("scope").value
+            if (scope.length > 0 && !scope.endsWith("/")) { scope += "/" }
+
+            console.log("Send cmd_vel to " + bridge_url + scope + cmd_vel_res);
+            // PUT it to zenoh via its REST API
+            Http.open('PUT', bridge_url + scope + cmd_vel_res, true);
+            Http.setRequestHeader('Content-Type', 'application/octet-stream');
+            Http.send(writer.buf.buffer);
+        }
+
+        // callback on keyboard's down key event
+        function onkeydown(e) {
+            e = e || window.event;
+            console.log("KeyPressed: " + e);
+            if (e.keyCode == '38') {
+                // up arrow
+                pubTwist(1.0, 0.0);
+            }
+            else if (e.keyCode == '40') {
+                // down arrow
+                pubTwist(-1.0, 0.0);
+            }
+            else if (e.keyCode == '37') {
+                // left arrow
+                pubTwist(0.0, 1.0);
+            }
+            else if (e.keyCode == '39') {
+                // right arrow
+                pubTwist(0.0, -1.0);
+            }
+            else if (e.keyCode == '32') {
+                // spacebar
+                pubTwist(0.0, 0.0);
+            }
+        }
+
+        // callback on keyboard's up key event
+        function onkeyup(e) {
+            // if key pressed was an arrow, send a Twist(0,0) to stop the robot
+            if (e.keyCode == '37' || e.keyCode == '38' || e.keyCode == '39' || e.keyCode == '40')
+                pubTwist(0.0, 0.0);
+        }
+
+        // register callback on key down
+        document.onkeydown = onkeydown;
+        // register callback on key up
+        document.onkeyup = onkeyup;
+
+        // EventSource receiving Logs
+        var rosout_source = null;
+
+        // subscribe to chatter topic
+        function subscribeToChatter() {
+            // close previous if exists
+            if (rosout_source != null) {
+                console.log("CLOSE ROSOUT EventSource");
+                rosout_source.close();
+            }
+
+            if (typeof (EventSource) !== "undefined") {
+                var bridge_url = document.getElementById("bridge_url").value
+                var listener_res = document.getElementById("listener_res").value
+                var scope = document.getElementById("scope").value
+                if (scope.length > 0 && !scope.endsWith("/")) { scope += "/" }
+                console.log("Subscribe to EventSource: " + bridge_url + scope + listener_res);
+                listener_source = new EventSource(bridge_url + scope + listener_res);
+                listener_source.addEventListener("PUT", function (e) {
+                    console.log("Received sample: " + e.data);
+                    // The zenoh REST API sends JSON objects
+                    // that includes "key", "value", "encoding" and "time" (same than a result to GET)
+                    let sample = JSON.parse(e.data)
+                    // The payload buffer is in "value" field, encoded as base64.
+                    // Since it's comming from DDS, we decode it using a jscdr.CDRReader.
+                    let reader = new jscdr.CDRReader(dcodeIO.ByteBuffer.fromBase64(sample.value));
+                    // Decode the buffer as a Log message
+                    let str = String.decode(reader);
+                    // Add it to "listener_logs" HTML element
+                    let elem = document.getElementById("listener_logs");
+                    elem.innerHTML += "data: '" + str.data + "'<br>";
+                    // Auto-scroll to the bottom
+                    elem.scrollTop = elem.scrollHeight;
+                }, false);
+
+            } else {
+                document.getElementById("rosout_logs").innerHTML = "Sorry, your browser does not support server-sent events...";
+            }
+        }
+
+        // subscribe to rosout topic
+        function subscribeToRosout() {
+            // close previous if exists
+            if (rosout_source != null) {
+                console.log("CLOSE ROSOUT EventSource");
+                rosout_source.close();
+            }
+
+            if (typeof (EventSource) !== "undefined") {
+                var bridge_url = document.getElementById("bridge_url").value
+                var rosout_res = document.getElementById("rosout_res").value
+                var scope = document.getElementById("scope").value
+                if (scope.length > 0 && !scope.endsWith("/")) { scope += "/" }
+                console.log("Subscribe to EventSource: " + bridge_url + scope + rosout_res);
+                rosout_source = new EventSource(bridge_url + scope + rosout_res);
+                rosout_source.addEventListener("PUT", function (e) {
+                    console.log("Received sample: " + e.data);
+                    // The zenoh REST API sends JSON objects
+                    // that includes "key", "value", "encoding" and "time" (same than a result to GET)
+                    let sample = JSON.parse(e.data)
+                    // The payload buffer is in "value" field, encoded as base64.
+                    // Since it's comming from DDS, we decode it using a jscdr.CDRReader.
+                    let reader = new jscdr.CDRReader(dcodeIO.ByteBuffer.fromBase64(sample.value));
+                    // Decode the buffer as a Log message
+                    let log = Log.decode(reader);
+                    // Add it to "rosout_logs" HTML element
+                    let elem = document.getElementById("rosout_logs");
+                    elem.innerHTML += "[" + log.time.sec + "." + log.time.nsec + "] [" + log.name + "]: " + log.msg + "<br>";
+                    // Auto-scroll to the bottom
+                    elem.scrollTop = elem.scrollHeight;
+                }, false);
+
+            } else {
+                document.getElementById("rosout_logs").innerHTML = "Sorry, your browser does not support server-sent events...";
+            }
+        }
+
+        // EventSource receiving battery state
+        var battery_source = null;
+
+        // subscribe to battery_state topic
+        function subscribeToBattery() {
+            // close previous if exists
+            if (battery_source != null) {
+                console.log("CLOSE ROSOUT EventSource");
+                battery_source.close();
+            }
+
+            if (typeof (EventSource) !== "undefined") {
+                var bridge_url = document.getElementById("bridge_url").value
+                // battery_state key is the same than rousout key but replacing "rosout" with "battery_state"
+                var battery_key = document.getElementById("rosout_res").value.replace("rosout", "battery_state")
+                var scope = document.getElementById("scope").value
+                if (scope.length > 0 && !scope.endsWith("/")) { scope += "/" }
+                console.log("Subscribe to EventSource: " + bridge_url + scope + battery_key);
+                battery_source = new EventSource(bridge_url + scope + battery_key);
+                battery_source.addEventListener("PUT", function (e) {
+                    console.log("Received sample: " + e.data);
+                    // The zenoh REST API sends JSON objects
+                    // that includes "key", "value", "encoding" and "time" (same than a result to GET)
+                    let sample = JSON.parse(e.data)
+                    // The payload buffer is in "value" field, encoded as base64.
+                    // Since it's comming from DDS, we decode it using a jscdr.CDRReader.
+                    let reader = new jscdr.CDRReader(dcodeIO.ByteBuffer.fromBase64(sample.value));
+                    // Decode the buffer as a BatteryState message
+                    let battery = BatteryState.decode(reader);
+                    // Set it to "battery" HTML element
+                    let elem = document.getElementById("battery");
+                    elem.innerHTML = "Battery: " + Math.round(battery.percentage) + " %";
+                }, false);
+
+            } else {
+                document.getElementById("rosout_logs").innerHTML = "Sorry, your browser does not support server-sent events...";
+            }
+        }
+
+        // EventSource receiving LaserScan
+        var scan_source = null;
+
+        // subscribe to scan topic
+        function subscribeToScan() {
+            // close previous if exists
+            if (scan_source != null) {
+                console.log("CLOSE Scan EventSource");
+                scan_source.close();
+            }
+
+            if (typeof (EventSource) !== "undefined") {
+                var bridge_url = document.getElementById("bridge_url").value
+                var scan_res = document.getElementById("scan_res").value
+                var scope = document.getElementById("scope").value
+                if (scope.length > 0 && !scope.endsWith("/")) { scope += "/" }
+                console.log("Subscribe to EventSource: " + bridge_url + scope + scan_res);
+                scan_source = new EventSource(bridge_url + scope + scan_res);
+                scan_source.addEventListener("PUT", function (e) {
+                    let sample = JSON.parse(e.data);
+                    // The payload buffer is in "value" field, encoded as base64.
+                    // Since it's comming from DDS, we decode it using a jscdr.CDRReader.
+                    let reader = new jscdr.CDRReader(dcodeIO.ByteBuffer.fromBase64(sample.value));
+                    // Decode the buffer as an LaserScan message
+                    let scan = LaserScan.decode(reader);
+
+                    // Get canvas context and set its dimensions
+                    const canvas = document.getElementById('Lidar-canvas');
+                    const ctx = canvas.getContext('2d');
+                    const width = canvas.width;
+                    const height = canvas.height;
+
+                    // Convert to [x,y, isInRange] points, where:
+                    //  - if isInRange==true then {x,y} are the relative coordinates computed from {angle,range}
+                    //  - if isInRange==false then the range was out of range_min/range_max and {x,y} are the relative
+                    //    coordinate of {angle,LIMIT} where LIMIT is range_max or range_min (the closest bound).
+                    let angle = scan.angle_min;
+                    let scale = Math.min(canvas.width, canvas.height) / 2 / scan.range_max;
+                    let points = [];
+                    for (const range of scan.ranges) {
+                        var r = range;
+                        var isInRange = true;
+                        if (range > scan.range_max) {
+                            r = scan.range_max;
+                            isInRange = false;
+                        } else if (range < scan.range_min) {
+                            r = scan.range_min;
+                            isInRange = false;
+                        }
+
+                        const x = -r * scale * Math.sin(angle);
+                        const y = -r * scale * Math.cos(angle);
+                        points.push([x, y, isInRange]);
+                        angle += scan.angle_increment;
+                    }
+
+                    // Clear canvas
+                    ctx.clearRect(0, 0, width, height);
+
+                    // Draw rays
+                    ctx.lineWidth = 2;
+                    for (const [x, y, isInRange] of points) {
+                        ctx_x = x + width / 2;
+                        ctx_y = y + height / 2;
+                        ctx.beginPath();
+                        if (isInRange) {
+                            ctx.strokeStyle = 'LightGray';
+                        } else {
+                            ctx.strokeStyle = 'Gainsboro';
+                        }
+                        ctx.moveTo(width / 2, height / 2);
+                        ctx.lineTo(ctx_x, ctx_y);
+                        ctx.stroke();
+                    }
+
+                    // Draw points
+                    ctx.fillStyle = 'red';
+                    for (const [x, y, isInRange] of points) {
+                        ctx_x = x + width / 2;
+                        ctx_y = y + height / 2;
+                        if (isInRange) {
+                            ctx.fillRect(ctx_x, ctx_y, 1, 1);
+                        }
+                    }
+
+                    // Draw axis lines
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'DimGray';
+                    ctx.lineWidth = 1;
+                    ctx.moveTo(0, height / 2);
+                    ctx.lineTo(width, height / 2);
+                    ctx.moveTo(width / 2, 0);
+                    ctx.lineTo(width / 2, height);
+                    ctx.stroke();
+
+                }, false);
+            } else {
+                document.document.getElementById("Lidar").innerHTML = "Sorry, your browser does not support server-sent events...";
+            }
+        }
+
+        function setCameraSrc() {
+            // If your robot has a camera and zcapture installed (from zenoh-demos/computer-vision/zcam/),
+            // uncomment the camera <div> block on top of this file.
+            // The zcapture must be started with "-k <scope>/cams/0", and the zenoh router must have the WebServer plugin running
+            if (document.getElementById("camera_img") != null) {
+                // Set "camera_img" element's src to the same URL host, but with port 8080 (WebServer plugin)
+                // and with path: "demo/zcam?_method=SUB"
+                var bridge_url = document.getElementById("bridge_url").value
+                var scope = document.getElementById("scope").value
+                if (scope.length > 0 && !scope.endsWith("/")) { scope += "/" }
+                img_url = bridge_url.replace(":8000", ":8080") + scope + "cams/0?_method=SUB";
+                document.getElementById("camera_img").src = img_url;
+            }
+        }
+
+        function resetAllSubscriptions() {
+            // subscribeToBattery();
+            // subscribeToRosout();
+            // subscribeToScan();
+            // setCameraSrc();
+            subscribeToChatter();
+        }
+
+        // Get "host" and "scope" from URL params, and set "bridge_url" and "scope" accordingly
+        const urlParams = new URLSearchParams(window.location.search);
+        const host = urlParams.get('host')
+        if (host != null && host.length > 0) {
+            console.log("host: " + host);
+            document.getElementById("bridge_url").value = "http://" + host + "/";
+        }
+        const scope = urlParams.get('scope')
+        if (host != null && host.length > 0) {
+            console.log("scope: " + scope);
+            document.getElementById("scope").value = scope;
+        }
+
+        // subscribe at page loading
+        resetAllSubscriptions();
+    </script>
+
+    <script type="text/javascript">
+    </script>
+
+</body>
+
+</html>
