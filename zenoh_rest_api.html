@@ -32,6 +32,20 @@
     </div>
 
     <div class="w3-card-4 w3-margin-bottom">
+        <header class="w3-bar w3-green" onclick="document.getElementById('Lidar').classList.toggle('w3-hide');">
+            <h5 class="w3-bar-item" style="margin: 0;">Lidar</h5>
+            <h5 class="w3-bar-item w3-right" style="margin: 0;"><i class='fa fa-line-chart'></i></h5>
+        </header>
+        <div id="Lidar" class="w3-container w3-padding" style="width: 95%; height: 400px;">
+            <label for="scan_res">Subscripe scan from:</label>
+            <input id="scan_res" class="w3-input w3-border w3-padding-small" type="text" required
+                value="scan"><br />
+            <canvas id="Lidar-canvas" width="300" height="300"></canvas>
+        </div>
+        <br />
+    </div>
+
+    <div class="w3-card-4 w3-margin-bottom">
         <header class="w3-bar w3-green" onclick="document.getElementById('Drive').classList.toggle('w3-hide');">
             <h5 class="w3-bar-item" style="margin: 0;">Drive</h5>
             <h5 class="w3-bar-item w3-right" style="margin: 0;"><i class='fa fa-gamepad'></i></h5>
@@ -122,10 +136,19 @@
         </form>
     </div>
 
-
     <script src="https://cdn.jsdelivr.net/npm/bytebuffer@5.0.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/jscdr@0.0.2/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.137.4/examples/js/controls/OrbitControls.js"></script>
+    <script src="./scripts/vis3d.js"></script>
+
     <script>
+        window.addEventListener('DOMContentLoaded', gui_init);
+        const lidar_gui = new GUI("Lidar-canvas", 300, 300);
+        function gui_init(){
+            lidar_gui.init();
+        }
+
         // ROS2 Time type
         class Time {
             constructor(sec, nsec) {
@@ -589,75 +612,7 @@
                     // Decode the buffer as an LaserScan message
                     let scan = LaserScan.decode(reader);
 
-                    // Get canvas context and set its dimensions
-                    const canvas = document.getElementById('Lidar-canvas');
-                    const ctx = canvas.getContext('2d');
-                    const width = canvas.width;
-                    const height = canvas.height;
-
-                    // Convert to [x,y, isInRange] points, where:
-                    //  - if isInRange==true then {x,y} are the relative coordinates computed from {angle,range}
-                    //  - if isInRange==false then the range was out of range_min/range_max and {x,y} are the relative
-                    //    coordinate of {angle,LIMIT} where LIMIT is range_max or range_min (the closest bound).
-                    let angle = scan.angle_min;
-                    let scale = Math.min(canvas.width, canvas.height) / 2 / scan.range_max;
-                    let points = [];
-                    for (const range of scan.ranges) {
-                        var r = range;
-                        var isInRange = true;
-                        if (range > scan.range_max) {
-                            r = scan.range_max;
-                            isInRange = false;
-                        } else if (range < scan.range_min) {
-                            r = scan.range_min;
-                            isInRange = false;
-                        }
-
-                        const x = -r * scale * Math.sin(angle);
-                        const y = -r * scale * Math.cos(angle);
-                        points.push([x, y, isInRange]);
-                        angle += scan.angle_increment;
-                    }
-
-                    // Clear canvas
-                    ctx.clearRect(0, 0, width, height);
-
-                    // Draw rays
-                    ctx.lineWidth = 2;
-                    for (const [x, y, isInRange] of points) {
-                        ctx_x = x + width / 2;
-                        ctx_y = y + height / 2;
-                        ctx.beginPath();
-                        if (isInRange) {
-                            ctx.strokeStyle = 'LightGray';
-                        } else {
-                            ctx.strokeStyle = 'Gainsboro';
-                        }
-                        ctx.moveTo(width / 2, height / 2);
-                        ctx.lineTo(ctx_x, ctx_y);
-                        ctx.stroke();
-                    }
-
-                    // Draw points
-                    ctx.fillStyle = 'red';
-                    for (const [x, y, isInRange] of points) {
-                        ctx_x = x + width / 2;
-                        ctx_y = y + height / 2;
-                        if (isInRange) {
-                            ctx.fillRect(ctx_x, ctx_y, 1, 1);
-                        }
-                    }
-
-                    // Draw axis lines
-                    ctx.beginPath();
-                    ctx.strokeStyle = 'DimGray';
-                    ctx.lineWidth = 1;
-                    ctx.moveTo(0, height / 2);
-                    ctx.lineTo(width, height / 2);
-                    ctx.moveTo(width / 2, 0);
-                    ctx.lineTo(width / 2, height);
-                    ctx.stroke();
-
+                    lidar_gui.drawLaserScan(scan_res, scan);
                 }, false);
             } else {
                 document.document.getElementById("Lidar").innerHTML = "Sorry, your browser does not support server-sent events...";
@@ -727,7 +682,7 @@
         function resetAllSubscriptions() {
             // subscribeToBattery();
             // subscribeToRosout();
-            // subscribeToScan();
+            subscribeToScan();
             subscribeToImage();
             subscribeToChatter();
         }
